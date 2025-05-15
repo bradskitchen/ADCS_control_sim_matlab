@@ -41,3 +41,34 @@ tspan = [0 period*number_of_orbits];
 %% Integrate equations of motion
 [tout, stateout] = ode45(@cubesat, tspan, state_0);
 
+
+%% plot 3D orbit
+
+%Extract position data
+x = stateout(:, 1);
+y = stateout(:, 2);
+z = stateout(:, 3);
+
+figure;
+
+%plot orbit
+plot3(x, y, z, 'r', linewidth=4);
+hold on;
+
+
+%load earth texture
+load('topo.mat', 'topo', 'topomap1')
+
+%plot the earth
+[earth_x, earth_y, earth_z] = sphere(50);
+surface(radius * earth_x, radius * earth_y, radius * earth_z, 'FaceColor', 'texturemap', 'CData', topo, 'EdgeColor','none');
+colormap(topomap1)
+
+%figure details
+title("cubesat orbit");
+xlabel('x');
+ylabel('y');
+zlabel('z');
+axis equal;
+grid on;
+hold off
