@@ -303,7 +303,7 @@ Rearth_km = 6371.2;
 %%% CHECK INPUT VALIDITY %%%
 % Convert time to a datenumber if it is a string.
 if ~isdatetime(dates)
-    dates = datetimes(dates);
+    dates = datetime(dates); %%fixed bug was datetimes now datetime
 end
 
 % Check that the input coordinates are scalars.
