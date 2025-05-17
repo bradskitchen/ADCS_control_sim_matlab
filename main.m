@@ -1,16 +1,23 @@
 clear;
 clc;
+close all;
+global BX BY BZ
+
+%% setup igrf model
+addpath m_IGRF\
+
+%% get earth parameters
 [radius, m_earth, grav_const, mu] = earth();
 
 
 %% Initial Conditions
 
 %------------------------------------------------------
-altitude = 500000;
+altitude_0 = 500000;
 %------------------------------------------------------
 
 %Meters
-x_0 = radius + altitude;
+x_0 = radius + altitude_0;
 y_0 = 0;
 z_0 = 0;
 
@@ -19,7 +26,7 @@ semi_major = norm([x_0; y_0; z_0]);
 
 vcircular = sqrt(mu/semi_major);
 
-inclination = 0;
+inclination = 56*pi/180;
 %------------------------------------------------------
 
 %Meters/sec
@@ -40,6 +47,19 @@ tspan = [0 period*number_of_orbits];
 
 %% Integrate equations of motion
 [tout, stateout] = ode45(@cubesat, tspan, state_0);
+
+
+%% loop through stateout to get mag field
+BX_out = 0*stateout(:, 1);
+BY_out = BX_out;
+BZ_out = BX_out;
+
+for idx = 1:length(tout)
+    dstate_dt = cubesat(tout(idx), stateout(idx, :));
+    BX_out(idx) = BX;
+    BY_out(idx) = BY;
+    BZ_out(idx) = BZ;
+end
 
 
 %% plot 3D orbit
@@ -70,5 +90,14 @@ xlabel('x');
 ylabel('y');
 zlabel('z');
 axis equal;
+grid on;
+hold off
+
+%%Plot Mag Field
+figure;
+hold on;
+plot(tout, BX_out, 'b', LineWidth=2);
+plot(tout, BY_out, 'g', LineWidth=2);
+plot(tout, BZ_out, 'r', LineWidth=2);
 grid on;
 hold off
