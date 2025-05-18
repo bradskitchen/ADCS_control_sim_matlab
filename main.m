@@ -54,11 +54,13 @@ state_0 = [x_0; y_0; z_0; vel_x_0; vel_y_0; vel_z_0; quanternions_0'; p0; q0; r0
 
 period = 2*pi/sqrt(mu)*semi_major^(3/2);
 number_of_orbits = 1;
-tspan = [0 period*number_of_orbits];
+tspan = [0, period*number_of_orbits];
+h = 1; % step size in seconds
 
 
 %% Integrate equations of motion
-[tout, stateout] = ode45(@cubesat, tspan, state_0);
+% [tout, stateout] = ode45(@cubesat, tspan, state_0);
+[tout, stateout] = rk4(@cubesat, tspan, state_0, h);
 
 
 %% loop through stateout to get mag field
