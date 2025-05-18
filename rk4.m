@@ -16,17 +16,21 @@ function [t_out, y_out] = rk4(odefun, tspan, y0, h)
 
 
     % Determine the number of steps
-    num_steps = ceil((t-end - t_start) / h);
+    num_steps = ceil((t_end - t_start) / h);
 
     %adjust step size to match time exactly
-    h = (t_end - t_start) / n_steps;
+    h = (t_end - t_start) / num_steps;
 
     %Initalize output
-    t_out = zeros(n_steps + 1, 1);
-    y_out = zeros(n_steps + 1, length(y0));
+    t_out = zeros(num_steps + 1, 1);
+    y_out = zeros(num_steps + 1, length(y0));
+
+    %set initial conditions
+    t_out(1) = t_start;
+    y_out(1, :) = y0';
 
     %% Integration loop
-    for i = 1:n_steps
+    for i = 1:num_steps
         t = t_out(i);
         y = y_out(i, :)';
 
