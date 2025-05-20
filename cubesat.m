@@ -82,13 +82,22 @@ function dstate_dt = cubesat(t, state)
         %%navigation block
         [BfieldNav, pqrNav] = Navigation(BfieldMeasured, pqrMeasured);
     end
-    
+
+
+    %% control block
+    current = Control(BfieldNav, pqrNav);
+    [n, A] = magtorquer_params();
+    muB = current * n * A;
+
+    %% magtourquer model
+    mangnetorquers = cross(muB, BB);
+
+  
     %% translational dynamics
     F = F_grav;
     accel = F/m_cubesat;
 
-    %% magtourquer model
-    mangnetorquers = [0;0;0];
+
 
     %% rotational dynamics
     angular_momentum = inertia * pqr;
