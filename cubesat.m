@@ -2,6 +2,7 @@ function dstate_dt = cubesat(t, state)
     %%state_0 = [x_0; y_0; z_0; vel_x_0; vel_y_0; vel_z_0];
     global BB inv_inertia inertia m nextMagUpdate lastMagUpdate
     global lastSensorUpdate nextSensorUpdate BfieldMeasured pqrMeasured
+    global BfieldNav pqrNav BfieldNavprev pqrNavprev
 
     %x = state(1);
     %y = state(2);
@@ -68,13 +69,20 @@ function dstate_dt = cubesat(t, state)
     
 
         BB = TIBquat(quanternions)'*BI;
+        BB = BB * 1e-9;
 
     end
-
+    
+    
     if t >= lastSensorUpdate
+        %%sensor block
         lastSensorUpdate = lastSensorUpdate + nextSensorUpdate;
         [BfieldMeasured, pqrMeasured] = Sensor(BB, pqr);
+
+        %%navigation block
+        [BfieldNav, pqrNav] = Navigation(BfieldMeasured, pqrMeasured);
     end
+    
     %% translational dynamics
     F = F_grav;
     accel = F/m_cubesat;

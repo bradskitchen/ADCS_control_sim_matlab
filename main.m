@@ -1,10 +1,14 @@
 clear;
 clc;
 close all;
-global BB inv_inertia inertia m lastMagUpdate nextMagUpdate lastSensorUpdate nextSensorUpdate
-global BfieldMeasured pqrMeasured
 
-tic
+tic 
+global BB inv_inertia inertia m lastMagUpdate nextMagUpdate
+global lastSensorUpdate nextSensorUpdate BfieldMeasured pqrMeasured
+global BfieldNav pqrNav BfieldNavprev pqrNavprev
+
+BfieldNavprev = [0; 0; 0];
+pqrNavprev = [0; 0; 0];
 
 %% setup igrf model
 addpath m_IGRF\
@@ -45,9 +49,9 @@ psi_0 = 0;      %yaw    (angle about z)
 euler_angles_0 = [phi_0, theta_0, psi_0];
 quanternions_0 = eul2quat(euler_angles_0, "XYZ");
 
-p0 = 0;         %roll rate      (angular velocity about x)
-q0 = 0;         %pitch rate     (angular velocity about y)
-r0 = 0;         %yaw rate       (angular velocity about z)
+p0 = .25;         %roll rate      (angular velocity about x)
+q0 = -.15;         %pitch rate     (angular velocity about y)
+r0 = .3;         %yaw rate       (angular velocity about z)
 
 %% state vector
 state_0 = [x_0; y_0; z_0; vel_x_0; vel_y_0; vel_z_0; quanternions_0'; p0; q0; r0;];
@@ -77,10 +81,15 @@ BY_Measured = zeros(num_steps + 1, 1);
 BZ_Measured = zeros(num_steps + 1, 1);
 pqrm = zeros(num_steps + 1, 3);
 
+BX_Nav = zeros(num_steps + 1, 1);
+BY_Nav = zeros(num_steps + 1, 1);
+BZ_Nav = zeros(num_steps + 1, 1);
+pqrN = zeros(num_steps + 1, 3);
+
 tout(1) = tspan(1);
 stateout(1, :) = state_0';
 
-nextMagUpdate = 100;
+nextMagUpdate = 10;
 lastMagUpdate = 0;
 
 %call cubesat to initialize B fields
@@ -94,6 +103,9 @@ BZ_out(1) = BB(3);
 lastSensorUpdate = 0;
 nextSensorUpdate = 1;
 [MagScaleBias, MagFieldBias, MagScaleNoise, MagFieldNoise, AngScaleBias, AngFieldBias, AngScaleNoise, AngFieldNoise] = sensor_params();
+
+
+
 
 %status update
 progress_interval = 1;
@@ -123,9 +135,14 @@ for i = 1:num_steps
     BX_Measured(i + 1) = BfieldMeasured(1);
     BY_Measured(i + 1) = BfieldMeasured(2);
     BZ_Measured(i + 1) = BfieldMeasured(3);
+    BX_Nav(i + 1) = BfieldNav(1);
+    BY_Nav(i + 1) = BfieldNav(2);
+    BZ_Nav(i + 1) = BfieldNav(3);
 
     %save polluted pqr signal
-    pqrm(i, :) = pqrMeasured';
+    pqrm(i + 1, :) = pqrMeasured';
+    %save the filtered pqr signal
+    pqrN(i + 1, :) = pqrNav';
 
     %progress update
     progress = 100 * tout(i + 1) / tspan(2);
@@ -174,11 +191,14 @@ hold off
 figure;
 hold on;
 plot(tout, BX_out, 'b', LineWidth=2);
-plot(tout, BY_out, 'g', LineWidth=2);
-plot(tout, BZ_out, 'r', LineWidth=2);
+plot(tout, BY_out, 'y', LineWidth=2);
+plot(tout, BZ_out, 'g', LineWidth=2);
 plot(tout, BX_Measured, 'b--', LineWidth=2);
-plot(tout, BY_Measured, 'g--', LineWidth=2);
-plot(tout, BZ_Measured, 'r--', LineWidth=2);
+plot(tout, BY_Measured, 'y--', LineWidth=2);
+plot(tout, BZ_Measured, 'g--', LineWidth=2);
+plot(tout, BX_Nav, 'r-', LineWidth=2);
+plot(tout, BY_Nav, 'm-', LineWidth=2);
+plot(tout, BZ_Nav, 'k-', LineWidth=2);
 grid on;
 hold off
 
@@ -197,5 +217,6 @@ figure;
 plot(tout, pqr_out, LineWidth=2);
 hold on;
 plot(tout, pqrm, '--', LineWidth=2);
+plot(tout, pqrN, LineWidth=2)
 
 toc
